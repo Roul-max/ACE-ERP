@@ -3,13 +3,15 @@ import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import logger from './config/logger';
 import User from './models/User';
-import dns from "node:dns";
 
-dns.setServers(["1.1.1.1", "8.8.8.8"]);
 dotenv.config();
 
 const PORT = process.env.PORT || 5000;
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/university_db';
+if (!process.env.MONGO_URI) {
+  throw new Error("MONGO_URI is not defined in environment variables");
+}
+
+const MONGO_URI = process.env.MONGO_URI;
 
 const startServer = async () => {
   try {
