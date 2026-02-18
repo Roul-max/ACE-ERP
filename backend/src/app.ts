@@ -30,7 +30,7 @@ const app = express();
 const allowedOrigins = [
   "http://localhost:5173",
   process.env.FRONTEND_URL
-];
+].filter(Boolean) as string[];
 
 app.use(
   cors({
@@ -46,12 +46,12 @@ app.use(
 );
 
 /* =====================================================
-   Global Middleware
+   Security & Global Middleware
 ===================================================== */
 
+app.use(helmet());
 app.use(express.json({ limit: "10kb" }));
 app.use(compression());
-app.use(helmet());
 app.use(mongoSanitize());
 app.use(xss());
 app.use(limiter);
@@ -69,7 +69,7 @@ app.use(
 );
 
 /* =====================================================
-   Routes
+   API Routes
 ===================================================== */
 
 app.use("/api/v1/auth", authRoutes);
@@ -96,7 +96,20 @@ app.get("/api/v1/health", (_req: Request, res: Response) => {
 ===================================================== */
 
 app.get("/", (_req: Request, res: Response) => {
-  res.status(200).json({ message: "ACE ERP API" });
+  res.status(200).json({
+    message: "ACE ERP API",
+    status: "Running"
+  });
+});
+
+/* =====================================================
+   404 Handler
+===================================================== */
+
+app.use((_req: Request, res: Response) => {
+  res.status(404).json({
+    message: "Route not found"
+  });
 });
 
 /* =====================================================
@@ -105,8 +118,11 @@ app.get("/", (_req: Request, res: Response) => {
 
 app.use(
   (err: Error, _req: Request, res: Response, _next: NextFunction) => {
-    logger.error(err.stack);
-    res.status(500).json({ message: "Internal Server Error" });
+    logger.error(err.stack || err.message);
+
+    res.status(500).json({
+      message: "Internal Server Error"
+    });
   }
 );
 
