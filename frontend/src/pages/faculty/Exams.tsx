@@ -1,9 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { useForm } from 'react-hook-form';
 import client from '../../api/client';
+import { AuthContext } from '../../context/AuthContext';
 import { Calendar, Plus, Eye, X, BookOpen, CheckCircle, BarChart3, Users, Edit } from 'lucide-react';
 
 const Exams: React.FC = () => {
+  const { user } = useContext(AuthContext)!;
   const [exams, setExams] = useState([]);
   const [courses, setCourses] = useState([]);
   const [students, setStudents] = useState<any[]>([]);
@@ -23,7 +25,11 @@ const Exams: React.FC = () => {
     try {
       const examsRes = await client.get('/exams/faculty');
       setExams(examsRes.data);
-      const coursesRes = await client.get('/courses/my');
+      
+      // Admin should see all courses to schedule exams for anyone
+      // Faculty should only see their own courses
+      const courseEndpoint = user?.role === 'admin' ? '/courses' : '/courses/my';
+      const coursesRes = await client.get(courseEndpoint);
       setCourses(coursesRes.data);
     } catch (e) {
       console.error(e);
@@ -33,7 +39,7 @@ const Exams: React.FC = () => {
   useEffect(() => {
     fetchData();
     client.get('/students').then(res => setStudents(res.data.students)).catch(console.error);
-  }, []);
+  }, [user]);
 
   const showSuccess = (msg: string) => {
     setSuccessMsg(msg);
